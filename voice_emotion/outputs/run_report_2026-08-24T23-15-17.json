@@ -1,0 +1,179 @@
+{
+  "run_timestamp": "2026-08-24T23:15:17.585022",
+  "model_version": "1.0.0",
+  "model_type": "improved",
+  "config_hash": "ef7a2a37cc30",
+  "config_snapshot": {
+    "project": {
+      "name": "voice_emotion_analysis",
+      "version": "1.0.0",
+      "seed": 42
+    },
+    "dataset": {
+      "name": "ravdess",
+      "root_dir": "data/raw/RAVDESS/Audio_Speech_Actors_01-24",
+      "extra_datasets": [],
+      "label_map": {
+        "01": "neutral",
+        "02": "calm",
+        "03": "happy",
+        "04": "sad",
+        "05": "angry",
+        "06": "fearful",
+        "07": "disgust",
+        "08": "surprised"
+      },
+      "distress_weights": {
+        "fearful": 1.0,
+        "sad": 0.8,
+        "angry": 0.7,
+        "disgust": 0.5,
+        "surprised": 0.2,
+        "neutral": 0.0,
+        "calm": 0.0,
+        "happy": 0.0
+      },
+      "test_actor_ids": [
+        23,
+        24
+      ]
+    },
+    "features": {
+      "sample_rate": 22050,
+      "n_mfcc": 40,
+      "n_fft": 2048,
+      "hop_length": 512,
+      "max_seq_len": 128,
+      "delta_orders": [
+        1,
+        2
+      ],
+      "pitch_method": "pyin",
+      "pitch_fmin": 50,
+      "pitch_fmax": 500,
+      "silence_threshold_db": -60,
+      "normalize": true
+    },
+    "augmentation": {
+      "enabled": false,
+      "train_only": true,
+      "pitch_shift": {
+        "enabled": true,
+        "n_steps_range": [
+          -2,
+          2
+        ],
+        "probability": 0.4
+      },
+      "time_stretch": {
+        "enabled": true,
+        "rate_range": [
+          0.85,
+          1.15
+        ],
+        "probability": 0.3
+      },
+      "additive_noise": {
+        "enabled": true,
+        "snr_db_range": [
+          10,
+          40
+        ],
+        "probability": 0.4
+      },
+      "spec_augment": {
+        "enabled": true,
+        "freq_mask_param": 10,
+        "time_mask_param": 20,
+        "num_freq_masks": 2,
+        "num_time_masks": 2,
+        "probability": 0.5
+      }
+    },
+    "model": {
+      "type": "improved",
+      "num_classes": 8,
+      "embed_dim": 128,
+      "hidden_size": 128,
+      "num_layers": 2,
+      "dropout": 0.3,
+      "bidirectional": true,
+      "cnn_frontend": {
+        "enabled": true,
+        "channels": [
+          64,
+          128
+        ],
+        "kernel_size": 3,
+        "padding": 1
+      },
+      "attention": {
+        "num_heads": 4,
+        "dropout": 0.1
+      }
+    },
+    "training": {
+      "epochs": 1,
+      "batch_size": 4,
+      "learning_rate": 0.001,
+      "optimizer": "adam",
+      "weight_decay": 0.0001,
+      "loss": "focal",
+      "focal_gamma": 2.0,
+      "label_smooth_eps": 0.1,
+      "scheduler": "plateau",
+      "scheduler_patience": 5,
+      "scheduler_factor": 0.5,
+      "cosine_t_max": 35,
+      "n_folds": 2,
+      "early_stop_patience": 10,
+      "early_stop_metric": "macro_f1",
+      "num_workers": 0,
+      "pin_memory": false
+    },
+    "evaluation": {
+      "threshold_tuning": true,
+      "output_dir": "outputs"
+    },
+    "logging": {
+      "level": "INFO",
+      "log_dir": "logs",
+      "mlflow_enabled": false,
+      "mlflow_tracking_uri": "mlruns",
+      "mlflow_experiment": "voice_emotion",
+      "wandb_enabled": false,
+      "wandb_project": "voice_emotion",
+      "wandb_entity": null
+    }
+  },
+  "cv_summary": {
+    "n_folds": 2,
+    "mean_macro_f1": 0.0225,
+    "std_macro_f1": 0.0069,
+    "per_fold_macro_f1": [
+      0.0156,
+      0.0294
+    ]
+  },
+  "best_fold": {
+    "fold_index": 1,
+    "best_val_macro_f1": 0.0294,
+    "best_epoch": 1,
+    "checkpoint_path": "outputs\\fold_1\\best_model.pt"
+  },
+  "test_metrics": {
+    "accuracy": 0.1333,
+    "macro_f1": 0.0294,
+    "weighted_f1": 0.0314,
+    "per_class_f1": {
+      "angry": 0.0,
+      "calm": 0.0,
+      "disgust": 0.2353,
+      "fearful": 0.0,
+      "happy": 0.0,
+      "neutral": 0.0,
+      "sad": 0.0,
+      "surprised": 0.0
+    }
+  }
+}

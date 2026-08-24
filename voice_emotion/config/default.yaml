@@ -1,0 +1,179 @@
+# ============================================================
+# Voice Emotion Analysis — Master Configuration
+# All paths, feature params, model hyper-params in one place.
+# Override any value via CLI: --set training.batch_size=32
+# ============================================================
+
+project:
+  name: "voice_emotion_analysis"
+  version: "1.0.0"
+  seed: 42
+
+# ---- Dataset -----------------------------------------------
+dataset:
+  name: "ravdess"
+  # Point this at the unzipped Audio_Speech_Actors_01-24 folder
+  root_dir: "data/raw/RAVDESS/Audio_Speech_Actors_01-24"
+
+  # Additional corpora to merge (CREMA-D, TESS, etc.) — empty by default
+  extra_datasets: []
+  # Format for each entry:
+  #   - name: "crema_d"
+  #     root_dir: "data/raw/CREMA-D"
+
+  # RAVDESS emotion code → label name
+  label_map:
+    "01": "neutral"
+    "02": "calm"
+    "03": "happy"
+    "04": "sad"
+    "05": "angry"
+    "06": "fearful"
+    "07": "disgust"
+    "08": "surprised"
+
+  # Weights for the scalar distress sub-score
+  # distress_subscore = Σ weight_i * p_i  (then clipped to [0, 1])
+  distress_weights:
+    fearful:   1.0
+    sad:       0.8
+    angry:     0.7
+    disgust:   0.5
+    surprised: 0.2
+    neutral:   0.0
+    calm:      0.0
+    happy:     0.0
+
+  # These actors are NEVER seen during training/CV — strict hold-out test set
+  test_actor_ids: [23, 24]
+
+# ---- Feature Extraction ------------------------------------
+features:
+  sample_rate: 22050
+  n_mfcc: 40              # per-frame MFCC coefficients
+  n_fft: 2048
+  hop_length: 512
+  max_seq_len: 128        # pad/truncate all sequences to this length
+  # Delta orders applied to MFCCs (1=first-order delta, 2=delta-delta)
+  delta_orders: [1, 2]
+  # Pitch extraction
+  pitch_method: "pyin"    # "yin" or "pyin" (probabilistic — more robust)
+  pitch_fmin: 50          # Hz
+  pitch_fmax: 500         # Hz
+  # Silence detection
+  silence_threshold_db: -60
+  # Normalise each feature to zero-mean unit-variance after extraction
+  normalize: true
+  # Derived: feature_dim = n_mfcc * (1 + len(delta_orders)) + 5
+  #          = 40 * 3 + 5 = 125  (mfcc+Δ+ΔΔ, pitch, zcr, rms, tempo, silence_ratio)
+
+# ---- Data Augmentation -------------------------------------
+augmentation:
+  enabled: true
+  train_only: true    # Never augment val/test
+
+  pitch_shift:
+    enabled: true
+    n_steps_range: [-2, 2]   # semitones
+    probability: 0.4
+
+  time_stretch:
+    enabled: true
+    rate_range: [0.85, 1.15]
+    probability: 0.3
+
+  additive_noise:
+    enabled: true
+    snr_db_range: [10, 40]   # signal-to-noise ratio
+    probability: 0.4
+
+  spec_augment:
+    enabled: true
+    freq_mask_param: 10      # max freq bins to mask
+    time_mask_param: 20      # max time frames to mask
+    num_freq_masks: 2
+    num_time_masks: 2
+    probability: 0.5
+
+# ---- Model Architecture ------------------------------------
+model:
+  # "baseline"  → 2-layer LSTM + FC (exact spec)
+  # "improved"  → BiLSTM + self-attention + optional CNN front-end
+  type: "improved"
+
+  num_classes: 8
+  embed_dim: 128          # size of the fusion-ready embedding vector
+
+  # Shared LSTM params
+  hidden_size: 128        # per direction (baseline: 128, improved: 128 × 2 = 256 total)
+  num_layers: 2
+  dropout: 0.3
+
+  # Improved-only: Bidirectional flag
+  bidirectional: true
+
+  # Improved-only: lightweight 1-D CNN front-end over MFCC frames
+  cnn_frontend:
+    enabled: true
+    channels: [64, 128]
+    kernel_size: 3
+    padding: 1
+
+  # Improved-only: self-attention pooling
+  attention:
+    num_heads: 4
+    dropout: 0.1
+
+# ---- Training ----------------------------------------------
+training:
+  epochs: 35
+  batch_size: 64
+  learning_rate: 0.001
+  optimizer: "adam"       # "adam" | "adamw"
+  weight_decay: 1.0e-4    # used only for adamw
+
+  # Loss function (class imbalance handling)
+  # "focal"            → Focal Loss (recommended for imbalanced distress classes)
+  # "weighted_ce"      → class-frequency-weighted CrossEntropyLoss
+  # "label_smooth_ce"  → CrossEntropyLoss with label smoothing
+  # "ce"               → plain CrossEntropyLoss (for ablation)
+  loss: "focal"
+  focal_gamma: 2.0
+  label_smooth_eps: 0.1
+
+  # LR Scheduling
+  scheduler: "plateau"    # "plateau" | "cosine" | "none"
+  scheduler_patience: 5   # epochs without improvement (plateau)
+  scheduler_factor: 0.5
+  cosine_t_max: 35        # total steps for cosine annealing
+
+  # Cross-validation (speaker-aware: no actor appears in both train and val)
+  n_folds: 5
+
+  # Early stopping
+  early_stop_patience: 10
+  # "macro_f1" → stop when val macro-F1 does not improve (recommended)
+  # "val_loss" → stop on val loss (faster, less F1-optimal)
+  early_stop_metric: "macro_f1"
+
+  # DataLoader
+  num_workers: 0          # set > 0 on Linux/Mac; keep 0 on Windows to avoid mp issues
+  pin_memory: false
+
+# ---- Evaluation --------------------------------------------
+evaluation:
+  threshold_tuning: true  # post-hoc per-class threshold optimisation on val set
+  output_dir: "outputs"
+
+# ---- Logging & Experiment Tracking -------------------------
+logging:
+  level: "INFO"
+  log_dir: "logs"
+  # MLflow hook — set mlflow_enabled: true to activate
+  mlflow_enabled: false
+  mlflow_tracking_uri: "mlruns"
+  mlflow_experiment: "voice_emotion"
+  # Weights & Biases hook
+  wandb_enabled: false
+  wandb_project: "voice_emotion"
+  wandb_entity: null      # your W&B username / team

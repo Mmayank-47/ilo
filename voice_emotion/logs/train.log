@@ -1,0 +1,63 @@
+2026-08-24 23:04:52,976 | INFO     | __main__ | Starting training run.  Config: config/default.yaml  dry_run=True
+2026-08-24 23:04:53,896 | INFO     | data.dataset | Registered dataset scanner: ravdess
+2026-08-24 23:04:53,952 | INFO     | data.dataset | Scanned 1440 RAVDESS samples from data/raw/RAVDESS/Audio_Speech_Actors_01-24
+2026-08-24 23:04:53,953 | INFO     | data.dataset | Split: trainval=1320  test=120  (test actors: [23, 24])
+2026-08-24 23:04:53,953 | INFO     | __main__ | Classes: ['angry', 'calm', 'disgust', 'fearful', 'happy', 'neutral', 'sad', 'surprised']
+2026-08-24 23:04:53,953 | INFO     | __main__ | Total samples — trainval: 1320, test: 120
+2026-08-24 23:04:53,962 | INFO     | training.trainer | Device: cpu
+2026-08-24 23:04:53,978 | INFO     | data.dataset | DataLoaders ready — train: 660 samples, val: 660 samples, test: 120 samples
+2026-08-24 23:04:53,997 | INFO     | training.trainer | Model: improved | params: 1,005,000
+2026-08-24 23:04:54,000 | INFO     | training.losses | Building loss function: 'focal'
+2026-08-24 23:04:55,311 | INFO     | training.trainer | ============================================================
+2026-08-24 23:04:55,312 | INFO     | training.trainer |   FOLD 1 / 2
+2026-08-24 23:04:55,312 | INFO     | training.trainer | ============================================================
+2026-08-24 23:11:06,056 | INFO     | training.trainer | Epoch   1/  1  [370.7s]  train_loss=1.7082  val_loss=1.5686  train_F1=0.1092  val_macro_F1=0.0156
+2026-08-24 23:11:06,056 | INFO     | training.trainer |   val per-class F1: ang=0.00  cal=0.00  dis=0.00  fea=0.00  hap=0.00  neu=0.12  sad=0.00  sur=0.00
+2026-08-24 23:11:06,074 | INFO     | training.callbacks | Checkpoint saved: outputs\fold_0\best_model.pt  (macro_f1=0.0156)
+2026-08-24 23:11:06,088 | INFO     | training.trainer | Fold 1 complete. Best val macro-F1=0.0156 at epoch 1
+2026-08-24 23:11:06,092 | INFO     | data.dataset | DataLoaders ready — train: 660 samples, val: 660 samples, test: 120 samples
+2026-08-24 23:11:06,104 | INFO     | training.trainer | Model: improved | params: 1,005,000
+2026-08-24 23:11:06,105 | INFO     | training.losses | Building loss function: 'focal'
+2026-08-24 23:11:06,106 | INFO     | training.trainer | ============================================================
+2026-08-24 23:11:06,106 | INFO     | training.trainer |   FOLD 2 / 2
+2026-08-24 23:11:06,106 | INFO     | training.trainer | ============================================================
+2026-08-24 23:13:45,102 | INFO     | training.trainer | Epoch   1/  1  [159.0s]  train_loss=1.6823  val_loss=1.5646  train_F1=0.1300  val_macro_F1=0.0294
+2026-08-24 23:13:45,103 | INFO     | training.trainer |   val per-class F1: ang=0.00  cal=0.00  dis=0.24  fea=0.00  hap=0.00  neu=0.00  sad=0.00  sur=0.00
+2026-08-24 23:13:45,115 | INFO     | training.callbacks | Checkpoint saved: outputs\fold_1\best_model.pt  (macro_f1=0.0294)
+2026-08-24 23:13:45,129 | INFO     | training.trainer | Fold 2 complete. Best val macro-F1=0.0294 at epoch 1
+2026-08-24 23:13:45,132 | INFO     | training.trainer | CV Summary: macro-F1 = 0.0225 ± 0.0069  (per-fold: ['0.0156', '0.0294'])
+2026-08-24 23:13:45,132 | INFO     | training.trainer | Best fold: 2  (checkpoint: outputs\fold_1\best_model.pt)
+2026-08-24 23:13:46,137 | INFO     | evaluation.metrics | Training curves saved: outputs\plots\fold_0_curves.png
+2026-08-24 23:13:46,395 | INFO     | evaluation.metrics | Training curves saved: outputs\plots\fold_1_curves.png
+2026-08-24 23:13:46,396 | INFO     | __main__ | Running threshold tuning on fold 2 val set...
+2026-08-24 23:13:46,404 | INFO     | data.dataset | DataLoaders ready — train: 660 samples, val: 660 samples, test: 120 samples
+2026-08-24 23:13:46,418 | INFO     | training.trainer | Model: improved | params: 1,005,000
+2026-08-24 23:15:02,706 | INFO     | evaluation.threshold_tuning | Threshold tuning complete. Macro-F1 with tuned thresholds: 0.0294
+2026-08-24 23:15:02,708 | INFO     | evaluation.threshold_tuning | Thresholds saved: outputs\fold_1\thresholds.json
+2026-08-24 23:15:02,708 | INFO     | __main__ | Thresholds saved to: outputs\fold_1\thresholds.json
+2026-08-24 23:15:02,709 | INFO     | __main__ | Running test-set evaluation...
+2026-08-24 23:15:02,720 | INFO     | training.trainer | Model: improved | params: 1,005,000
+2026-08-24 23:15:02,746 | INFO     | data.dataset | DataLoaders ready — train: 1320 samples, val: 0 samples, test: 120 samples
+2026-08-24 23:15:02,746 | INFO     | training.losses | Building loss function: 'focal'
+2026-08-24 23:15:17,198 | INFO     | evaluation.metrics | ------------------------------------------------------------
+2026-08-24 23:15:17,199 | INFO     | evaluation.metrics |  TEST SET METRICS
+2026-08-24 23:15:17,199 | INFO     | evaluation.metrics | ------------------------------------------------------------
+2026-08-24 23:15:17,199 | INFO     | evaluation.metrics |   Accuracy:     0.1333
+2026-08-24 23:15:17,199 | INFO     | evaluation.metrics |   Macro F1:     0.0294
+2026-08-24 23:15:17,199 | INFO     | evaluation.metrics |   Weighted F1:  0.0314
+2026-08-24 23:15:17,199 | INFO     | evaluation.metrics |   Per-class F1:
+2026-08-24 23:15:17,200 | INFO     | evaluation.metrics |     angry         P=0.000  R=0.000  F1=0.000  n=16
+2026-08-24 23:15:17,200 | INFO     | evaluation.metrics |     calm          P=0.000  R=0.000  F1=0.000  n=16
+2026-08-24 23:15:17,200 | INFO     | evaluation.metrics |     disgust       P=0.133  R=1.000  F1=0.235  n=16
+2026-08-24 23:15:17,200 | INFO     | evaluation.metrics |     fearful       P=0.000  R=0.000  F1=0.000  n=16
+2026-08-24 23:15:17,200 | INFO     | evaluation.metrics |     happy         P=0.000  R=0.000  F1=0.000  n=16
+2026-08-24 23:15:17,200 | INFO     | evaluation.metrics |     neutral       P=0.000  R=0.000  F1=0.000  n=8
+2026-08-24 23:15:17,200 | INFO     | evaluation.metrics |     sad           P=0.000  R=0.000  F1=0.000  n=16
+2026-08-24 23:15:17,201 | INFO     | evaluation.metrics |     surprised     P=0.000  R=0.000  F1=0.000  n=16
+2026-08-24 23:15:17,201 | INFO     | evaluation.metrics | ------------------------------------------------------------
+2026-08-24 23:15:17,583 | INFO     | evaluation.metrics | Confusion matrix saved: outputs\plots\test_confusion_matrix.png
+2026-08-24 23:15:17,586 | INFO     | evaluation.report | JSON report saved: outputs\run_report_2026-08-24T23-15-17.json
+2026-08-24 23:15:17,586 | INFO     | evaluation.report | Markdown report saved: outputs\run_report_2026-08-24T23-15-17.md
+2026-08-24 23:15:17,590 | INFO     | evaluation.report | Model card saved: outputs\fold_1\model_card.json
+2026-08-24 23:15:17,590 | INFO     | __main__ | Reports: {'json_path': 'outputs\\run_report_2026-08-24T23-15-17.json', 'markdown_path': 'outputs\\run_report_2026-08-24T23-15-17.md'}
+2026-08-24 23:15:17,590 | INFO     | __main__ | Training complete.

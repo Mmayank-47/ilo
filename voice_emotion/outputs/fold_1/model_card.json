@@ -1,0 +1,31 @@
+{
+  "model_version": "1.0.0",
+  "model_type": "improved",
+  "config_hash": "ef7a2a37cc30",
+  "run_timestamp": "2026-08-24T23:15:17.585022",
+  "checkpoint_path": "outputs\\fold_1\\best_model.pt",
+  "cv_summary": {
+    "n_folds": 2,
+    "mean_macro_f1": 0.0225,
+    "std_macro_f1": 0.0069,
+    "per_fold_macro_f1": [
+      0.0156,
+      0.0294
+    ]
+  },
+  "test_metrics": {
+    "accuracy": 0.1333,
+    "macro_f1": 0.0294,
+    "weighted_f1": 0.0314,
+    "per_class_f1": {
+      "angry": 0.0,
+      "calm": 0.0,
+      "disgust": 0.2353,
+      "fearful": 0.0,
+      "happy": 0.0,
+      "neutral": 0.0,
+      "sad": 0.0,
+      "surprised": 0.0
+    }
+  }
+}
