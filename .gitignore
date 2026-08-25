@@ -70,3 +70,5 @@ tmp_sessions/
 # OS generated files
 .DS_Store
 Thumbs.db
+# Generated voice emotion feature cache
+voice_emotion/data/cache/

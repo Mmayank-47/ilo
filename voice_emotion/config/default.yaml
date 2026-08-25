@@ -127,6 +127,7 @@ model:
 # ---- Training ----------------------------------------------
 training:
   epochs: 35
+  cache_features: true
   batch_size: 64
   learning_rate: 0.001
   optimizer: "adam"       # "adam" | "adamw"

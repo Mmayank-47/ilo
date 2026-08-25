@@ -25,6 +25,7 @@ from torch.utils.data import DataLoader, Dataset, Subset, WeightedRandomSampler
 from data.features import FeatureConfig, extract_features
 from data.augmentation import AudioAugmentor
 
+import hashlib
 logger = logging.getLogger(__name__)
 
 
@@ -203,16 +204,23 @@ class EmotionDataset(Dataset):
 
     def __init__(
         self,
-        samples: List[Dict[str, Any]],
-        feature_cfg: FeatureConfig,
-        augmentor: Optional[AudioAugmentor] = None,
-        cache_features: bool = False,
-    ) -> None:
-        self.samples = samples
-        self.feature_cfg = feature_cfg
-        self.augmentor = augmentor  # None → no augmentation (val/test)
-        self.cache_features = cache_features
-        self._cache: Dict[int, np.ndarray] = {}
+            samples: List[Dict[str, Any]],
+            feature_cfg: FeatureConfig,
+            augmentor: Optional[AudioAugmentor] = None,
+            cache_features: bool = False,
+        ) -> None:
+            self.samples = samples
+            self.feature_cfg = feature_cfg
+            self.augmentor = augmentor
+            self.cache_features = cache_features
+        
+            # In-memory cache for the current run
+            self._cache: Dict[int, np.ndarray] = {}
+        
+            # Persistent disk cache
+            self.cache_dir = Path("data/cache")
+            if self.cache_features:
+                self.cache_dir.mkdir(parents=True, exist_ok=True)
 
     def __len__(self) -> int:
         return len(self.samples)
@@ -220,20 +228,42 @@ class EmotionDataset(Dataset):
     def __getitem__(self, idx: int) -> Tuple[torch.Tensor, int]:
         sample = self.samples[idx]
         label_idx = sample["label_idx"]
-
-        if self.cache_features and idx in self._cache:
-            features = self._cache[idx].copy()
+        
+            # ----------------------------------------------------------
+            # Load/extract the base features
+            # ----------------------------------------------------------
+        if self.cache_features:
+                # Create a unique, stable cache filename from the audio filepath
+                cache_key = hashlib.md5(
+                    sample["filepath"].encode("utf-8")
+                ).hexdigest()
+        
+                cache_path = self.cache_dir / f"{cache_key}.npy"
+        
+                # Load from disk if already cached
+                if cache_path.exists():
+                    features = np.load(cache_path)
+        
+                # Otherwise extract once and save for future use
+                else:
+                    features = self._extract(sample["filepath"])
+                    np.save(cache_path, features)
+        
         else:
-            features = self._extract(sample["filepath"])
-            if self.cache_features:
-                self._cache[idx] = features.copy()
-
-        # Apply augmentation (training only — augmentor is None for val/test)
+                # Caching disabled → extract features normally
+                features = self._extract(sample["filepath"])
+        
+            # ----------------------------------------------------------
+            # Apply augmentation (training only)
+            # IMPORTANT: augmentation happens AFTER loading the original
+            # cached features, so every training access can still be random.
+            # ----------------------------------------------------------
         if self.augmentor is not None:
-            features = self.augmentor.augment_features(features)
-
+                features = self.augmentor.augment_features(features)
+        
         tensor = torch.from_numpy(features)   # (max_seq_len, feature_dim)
         return tensor, label_idx
+
 
     def _extract(self, filepath: str) -> np.ndarray:
         """Extract features with waveform-level augmentation if enabled."""
@@ -432,13 +462,37 @@ def get_dataloaders(
     aug_cfg = cfg.get("augmentation", {})
     augmentor = AudioAugmentor(aug_cfg) if aug_cfg.get("enabled", True) else None
 
-    train_ds = EmotionDataset(train_samples, feat_cfg, augmentor=augmentor)
-    val_ds = EmotionDataset(val_samples, feat_cfg, augmentor=None)
-    test_ds = EmotionDataset(test_samples, feat_cfg, augmentor=None)
-
+    # Training samples use random augmentation, so we don't cache the
+# waveform-augmented features.
     num_workers = train_cfg.get("num_workers", 0)
     pin_memory = train_cfg.get("pin_memory", False)
     batch_size = train_cfg.get("batch_size", 64)
+    cache_features = train_cfg.get("cache_features", False)
+
+    train_ds = EmotionDataset(
+    train_samples,
+    feat_cfg,
+    augmentor=augmentor,
+    cache_features=False,
+)
+
+    # Validation and test data are deterministic, so caching saves a lot of time
+# after the first epoch.
+    val_ds = EmotionDataset(
+    val_samples,
+    feat_cfg,
+    augmentor=None,
+    cache_features=cache_features,
+)
+
+    test_ds = EmotionDataset(
+    test_samples,
+    feat_cfg,
+    augmentor=None,
+    cache_features=cache_features,
+)
+
+
 
     train_sampler = make_weighted_sampler(train_samples, ds_cfg.get("num_classes", 8)
                                           if "num_classes" in ds_cfg else cfg["model"]["num_classes"])
